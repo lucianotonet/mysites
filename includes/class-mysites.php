@@ -113,7 +113,7 @@ class Mysites {
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mysites-admin.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mysites-admin.php';		
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
@@ -156,6 +156,9 @@ class Mysites {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'mysites_add_admin_menu' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'mysites_settings_init' );
 
 	}
 

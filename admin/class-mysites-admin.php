@@ -99,5 +99,107 @@ class Mysites_Admin {
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/mysites-admin.js', array( 'jquery' ), $this->version, false );
 
 	}
+	
+	
+
+
+	public function mysites_add_admin_menu(  ) { 
+		// https://codex.wordpress.org/Function_Reference/add_options_page
+		add_options_page( 'MySites', 'MySites', 'manage_options', 'mysites', array( $this, 'mysites_options_page' ) );
+
+	}
+
+
+	public function mysites_settings_init(  ) { 
+
+		register_setting( 'pluginPage', 'mysites_settings' );
+
+		add_settings_section(
+			'mysites_pluginPage_section', 
+			__( 'Firebase conection', 'mysites' ), 
+			'mysites_settings_section_callback', 
+			'pluginPage'
+		);
+
+		add_settings_field( 
+			'mysites_text_field_0', 
+			__( 'Database URL', 'mysites' ), 
+			'mysites_text_field_0_render', 
+			'pluginPage', 
+			'mysites_pluginPage_section' 
+		);
+
+		add_settings_field( 
+			'mysites_text_field_1', 
+			__( 'Token', 'mysites' ), 
+			'mysites_text_field_1_render', 
+			'pluginPage', 
+			'mysites_pluginPage_section' 
+		);
+
+		add_settings_field( 
+			'mysites_text_field_2', 
+			__( 'Path', 'mysites' ), 
+			'mysites_text_field_2_render', 
+			'pluginPage', 
+			'mysites_pluginPage_section' 
+		);
+
+
+		function mysites_text_field_0_render(  ) { 
+
+			$options = get_option( 'mysites_settings' );
+			?>
+			<input type='text' name='mysites_settings[mysites_text_field_0]' value='<?php echo $options['mysites_text_field_0']; ?>'>
+			<?php
+
+		}
+
+
+		function mysites_text_field_1_render(  ) { 
+
+			$options = get_option( 'mysites_settings' );
+			?>
+			<input type='text' name='mysites_settings[mysites_text_field_1]' value='<?php echo $options['mysites_text_field_1']; ?>'>
+			<?php
+
+		}
+
+
+		function mysites_text_field_2_render(  ) { 
+
+			$options = get_option( 'mysites_settings' );
+			?>
+			<input type='text' name='mysites_settings[mysites_text_field_2]' value='<?php echo $options['mysites_text_field_2']; ?>'>
+			<?php
+
+		}
+
+
+		function mysites_settings_section_callback(  ) { 
+
+			echo __( 'Create an app at <a href="https://www.firebase.com/" target="_blank">Firebase.com</a> and place the database secrets here.', 'mysites' );
+
+		}
+	}
+
+
+	public function mysites_options_page(  ) { 
+
+		?>
+		<form action='options.php' method='post'>
+			
+			<h2>MySites settings</h2>
+			
+			<?php
+			settings_fields( 'pluginPage' );
+			do_settings_sections( 'pluginPage' );
+			submit_button();
+			?>
+			
+		</form>
+		<?php
+
+	}
 
 }
