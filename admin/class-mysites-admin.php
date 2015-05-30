@@ -22,6 +22,10 @@
  */
 class Mysites_Admin {
 
+	private $firebase_url;
+	private $firebase_token;
+	private $firebase_path;
+
 	/**
 	 * The ID of this plugin.
 	 *
@@ -49,8 +53,14 @@ class Mysites_Admin {
 	 */
 	public function __construct( $plugin_name, $version ) {
 
-		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->plugin_name 	= $plugin_name;
+		$this->version 		= $version;
+
+		$options 		= get_option( 'mysites_settings' );
+		
+		$this->firebase_url 	= $options['mysites_text_field_0']; //, 'https://mysites.firebaseio.com/' );
+		$this->firebase_token 	= $options['mysites_text_field_1']; //, '9TqzyKp9uAhdEGcSax1NDaMdr0XORfhfDYn6OnC8' );
+		$this->firebase_path 	= '';//$current_user->user_email; //$options['mysites_text_field_2']
 
 	}
 
@@ -169,8 +179,9 @@ class Mysites_Admin {
 		function mysites_text_field_2_render(  ) { 
 
 			$options = get_option( 'mysites_settings' );
+			$current_user 	= wp_get_current_user();
 			?>
-			<input type='text' name='mysites_settings[mysites_text_field_2]' value='<?php echo $options['mysites_text_field_2']; ?>'>
+			<input type='text' readonly="readonly" name='mysites_settings[mysites_text_field_2]' value='<?php echo $current_user->user_email ?>'>
 			<?php
 
 		}
@@ -186,6 +197,16 @@ class Mysites_Admin {
 
 	public function mysites_options_page(  ) { 
 
+		global $current_user;
+		get_currentuserinfo();		
+
+		// encode emailaddress
+		$current_user_email = rtrim(strtr(base64_encode( $current_user->user_email ), '+/', '-_'), '=');
+		$current_site_url 	= rtrim(strtr(base64_encode( get_bloginfo( 'url' ) ), '+/', '-_'), '=');
+		// decode email address
+		//$email_decoded = base64_decode(strtr($current_user_email, '-_', '+/'));
+		$this->firebase_path = $current_user_email . '/' . $current_site_url;
+	    
 		?>
 		<form action='options.php' method='post'>
 			
@@ -195,7 +216,30 @@ class Mysites_Admin {
 			settings_fields( 'pluginPage' );
 			do_settings_sections( 'pluginPage' );
 			submit_button();
+
+			$firebase = new \Firebase\FirebaseLib( $this->firebase_url, $this->firebase_token );
+
+
+
+			// --- storing an array ---
+			$dateTime = new DateTime();
+			
+			$mywebsite = array(				
+						    "title" 		=> get_bloginfo( 'name' ),
+						    "description" 	=> get_bloginfo( 'description' ),
+						    "url" 			=> get_bloginfo( 'url' ),
+							"updated_at"    => $dateTime->format('d-m-Y H:i:s')											
+						);
+
+			$userpath = $firebase->get( $this->firebase_path );
+			if( $userpath != null ){
+				$firebase->update($this->firebase_path, $mywebsite );
+			}else{			
+				$firebase->push( $this->firebase_path, $mywebsite );   // push data to Firebase			
+			}
 			?>
+
+			<pre><code><?php print_r( json_decode( $userpath ) ); ?></code></pre>
 			
 		</form>
 		<?php
