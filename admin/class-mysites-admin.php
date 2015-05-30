@@ -237,9 +237,22 @@ class Mysites_Admin {
 			}else{			
 				$firebase->push( $this->firebase_path, $mywebsite );   // push data to Firebase			
 			}
-			?>
 
-			<pre><code><?php print_r( json_decode( $userpath ) ); ?></code></pre>
+			$mysites 	 = $firebase->get( $current_user_email );
+			$mysites 	 = json_decode( $mysites ); 
+			$protocol 	 = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+			$current_url = $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];		
+			?>
+			<ul>
+			<?php foreach ($mysites as $site) { 
+				$teletransport_url = str_replace( get_bloginfo('url'), $site->url, $current_url);
+				?>
+				<li>					
+					<a href="<?php echo $teletransport_url ?>"><?php echo $site->title ?></a>						
+					<small><?php echo $site->url ?></small>					
+				</li>
+			<?php } ?>
+			</ul>			
 			
 		</form>
 		<?php
