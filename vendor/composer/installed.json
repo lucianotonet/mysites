@@ -1,7 +1,6 @@
 [
     {
         "name": "ktamas77/firebase-php",
-<<<<<<< HEAD
         "version": "2.0.0",
         "version_normalized": "2.0.0.0",
         "source": {
@@ -13,33 +12,14 @@
             "type": "zip",
             "url": "https://api.github.com/repos/ktamas77/firebase-php/zipball/52477150d423e88103264915b53fc2b41b5a71c5",
             "reference": "52477150d423e88103264915b53fc2b41b5a71c5",
-=======
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/ktamas77/firebase-php.git",
-            "reference": "31ab40dd01b1e0024841d7701d51927c711ec56b"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/ktamas77/firebase-php/zipball/31ab40dd01b1e0024841d7701d51927c711ec56b",
-            "reference": "31ab40dd01b1e0024841d7701d51927c711ec56b",
->>>>>>> 7dc356adc00271e19c96c5acb65993a69db95341
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-<<<<<<< HEAD
         "time": "2015-03-04 13:35:41",
         "type": "library",
         "installation-source": "dist",
-=======
-        "time": "2015-05-08 02:43:44",
-        "type": "library",
-        "installation-source": "source",
->>>>>>> 7dc356adc00271e19c96c5acb65993a69db95341
         "autoload": {
             "classmap": [
                 "src"
