@@ -4,20 +4,20 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "bf5fd82197037b254c62ec3c3869833a",
+    "hash": "d29fa7a8c9e3fb1079b2ab7b84e79b72",
     "packages": [
         {
             "name": "ktamas77/firebase-php",
-            "version": "dev-master",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ktamas77/firebase-php.git",
-                "reference": "31ab40dd01b1e0024841d7701d51927c711ec56b"
+                "reference": "52477150d423e88103264915b53fc2b41b5a71c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ktamas77/firebase-php/zipball/31ab40dd01b1e0024841d7701d51927c711ec56b",
-                "reference": "31ab40dd01b1e0024841d7701d51927c711ec56b",
+                "url": "https://api.github.com/repos/ktamas77/firebase-php/zipball/52477150d423e88103264915b53fc2b41b5a71c5",
+                "reference": "52477150d423e88103264915b53fc2b41b5a71c5",
                 "shasum": ""
             },
             "require": {
@@ -46,15 +46,13 @@
                 "rest",
                 "wrapper"
             ],
-            "time": "2015-05-08 02:43:44"
+            "time": "2015-03-04 13:35:41"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "ktamas77/firebase-php": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
