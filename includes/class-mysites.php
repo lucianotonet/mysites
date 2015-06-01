@@ -1,5 +1,5 @@
 <?php
-
+use \Firebase\FirebaseLib as Firebase;
 /**
  * The file that defines the core plugin class
  *
@@ -28,6 +28,16 @@
  * @author     Luciano Tonet <contato@lucianotonet.com>
  */
 class Mysites {
+
+	protected $mysites;
+	private   $firebase;
+	protected $firebase_url;
+	protected $firebase_token;
+	protected $firebase_sites_path;
+	protected $firebase_users_path;
+
+	protected $site_path;
+	protected $user_path;
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -71,10 +81,15 @@ class Mysites {
 		$this->plugin_name = 'mysites';
 		$this->version = '1.0.0';
 
+		$this->firebase_url 		= 'https://mysites.firebaseio.com/';
+	    $this->firebase_token 		= '9TqzyKp9uAhdEGcSax1NDaMdr0XORfhfDYn6OnC8';	    
+	    $this->firebase_sites_path 	= 'sites/';	
+	    $this->firebase_users_path  = 'users/';
+
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
-		$this->define_public_hooks();
+		$this->define_public_hooks();		
 
 	}
 
@@ -119,7 +134,7 @@ class Mysites {
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-mysites-public.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-mysites-public.php';		
 
 		$this->loader = new Mysites_Loader();
 
@@ -157,8 +172,10 @@ class Mysites {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
-		$this->loader->add_action( 'admin_menu', $plugin_admin, 'mysites_add_admin_menu' );
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'mysites_settings_init' );
+		// $this->loader->add_action( 'admin_menu', $plugin_admin, 'mysites_add_options_page' );
+		//$this->loader->add_action( 'admin_init', $plugin_admin, 'mysites_settings_init' );		
+		
+		$this->loader->add_action( 'admin_bar_menu', $this, 'mysites_build_menu',  100 );
 
 	}
 
@@ -169,13 +186,22 @@ class Mysites {
 	 * @since    1.0.0
 	 * @access   private
 	 */
-	private function define_public_hooks() {
+	private function define_public_hooks() {		
 
 		$plugin_public = new Mysites_Public( $this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
+		$this->loader->add_action( 'init', $this, 'setup_firebase' );
+
+	}
+
+	public function setup_firebase(){			
+		$this->firebase  = new Firebase( $this->firebase_url, $this->firebase_token );		
+
+		$this->site_path = $this->get_site_path();
+	    $this->user_path = $this->get_user_path();
 	}
 
 	/**
@@ -216,6 +242,120 @@ class Mysites {
 	 */
 	public function get_version() {
 		return $this->version;
+	}	
+
+	public function get_mysites() {
+		
+		$this->set_site();
+		$this->set_user();
+
+		$sites  = $this->firebase->get( $this->user_path . '/sites'  );	
+		$sites  = json_decode( $sites );		
+
+		$mysites = array();
+
+		foreach ($sites as $sitehash => $value) {
+			$mysite = $this->firebase->get( $this->firebase_sites_path . $sitehash );		
+			$mysites[] = json_decode( $mysite );		
+		}			
+
+		return $mysites; 
+
+	}
+
+	public function set_site(){
+				
+		$dateTime   = new DateTime();		
+		$mysite 	= array(				
+					    "url" 			=> get_bloginfo( 'url' ),
+					    "title" 		=> get_bloginfo( 'name' ),
+					    "description" 	=> get_bloginfo( 'description' ),
+						"updated_at"    => $dateTime->format('d-m-Y H:i:s')											
+					);		
+				
+		$this->firebase->update( $this->get_site_path(), $mysite );		
+
+	}
+
+	public function set_user(){
+
+		global $current_user;
+		get_currentuserinfo();
+		$userhash = rtrim(strtr(base64_encode( $current_user->user_email ), '+/', '-_'), '=');
+
+		$dateTime = new DateTime();			
+		$sitehash = rtrim(strtr(base64_encode( get_bloginfo( 'url' ) ), '+/', '-_'), '=');		
+		$userdata 	= array(	
+						'email' 	    => $current_user->user_email,
+						'userlevel'     => $current_user->user_level,
+						'updated_at'    => $dateTime->format('d-m-Y H:i:s'),						
+					);
+				
+		$this->firebase->update( $this->get_user_path(), $userdata );
+		$this->firebase->update( $this->get_user_path().'/sites', array( $sitehash => true ) );
+
+	}
+
+	public function mysites_build_menu( $admin_bar ){
+		
+		$mysites = $this->get_mysites();
+		
+		$protocol 	 = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+		$current_url = $protocol . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];		
+
+		if( isset($mysites) and !empty($mysites) ){
+
+			foreach ($mysites as $site) {
+				$args = array(
+		            'id'    => sanitize_file_name( strtolower( $site->title ) ),
+		            'title' => $site->title,
+		            'href'  => str_replace( get_bloginfo('url'), $site->url, $current_url),
+		            'parent' => 'my-account',
+		            'meta'  => array(
+		                    'title' => __( $site->url ),
+		                    ),
+		            );		
+		    	$admin_bar->add_menu( $args );
+			}
+
+		}else{
+			$args = array(
+	            'id'    => '',
+	            'title' => 'No sites...',
+	            'href'  => '#',
+	            'parent' => 'my-account'	            
+	            );		
+	    	$admin_bar->add_menu( $args );
+		}
+		
+	}
+
+	public function get_user_path(){
+		global $current_user;
+		get_currentuserinfo();
+		$userhash = rtrim(strtr(base64_encode( $current_user->user_email ), '+/', '-_'), '=');			
+		$user_path = $this->firebase_users_path . $userhash;
+		
+		$thisuser = $this->firebase->get( $user_path );
+		if( !$thisuser ){
+			$this->firebase->set( $this->firebase_users_path, $userhash );   // push data to Firebase			
+		}
+
+		return $user_path;
+	}
+
+
+	public function get_site_path(){
+
+		$sitehash  = rtrim(strtr(base64_encode( get_bloginfo( 'url' ) ), '+/', '-_'), '=');
+		$site_path = $this->firebase_sites_path . $sitehash;
+
+		$thissite = $this->firebase->get( $site_path );
+		if( !$thissite ){
+			$this->firebase->set( $this->firebase_sites_path, $sitehash );   // push data to Firebase			
+		}
+		return $site_path;	
+
 	}
 
 }
